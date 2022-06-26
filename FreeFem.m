@@ -1,0 +1,1 @@
+system("FreeFem++ Elasticity_matrix.edp")
