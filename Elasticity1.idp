@@ -18,10 +18,16 @@ plot(th,wait=1);
 fespace Ph(th,P0); // constant par triangle
 Ph E=E1;
 
+//fespace U(th, [P1, P1]);
+//U [ux,uy];
+
+fespace f(th, [P1, P1]);
+f [f1,f2];
 
 // Fespace
 fespace Vh(th, [P1, P1]);
 Vh [uu, vv], [w, s];
+
 
 //  find midlle (xp,yp) dof 
 w[]=0:w[].n-1; //  put dof number in array 
@@ -56,6 +62,41 @@ solve Elasticity ([uu, vv], [w, s], solver=sparsesolver)
 cout << "Max displacement = " << uu[].linfty << endl;
 
 
+//Stiffness Matrix
+varf bin(uu,vv) = int2d(th)(dx(uu) * dx(vv) + dy(uu) * dy(vv));
+matrix K = bin(Vh, Vh);
+
+real[int] U(K.n);
+for(int i=0; i < K.n / 2; i++){
+    U(2*i) = uu[](i);
+    U(2*i+1) = vv[](i);
+}
+
+real[int] F(K.n);
+F = (K * U);
+
+for(int i=0; i < K.n / 2; i++){
+    f1[](i) = F(2*i);
+    f2[](i) = F(2*i+1);
+}
+
+
+//Print the matrices.
+//cout << "\n";
+//cout << "  Matrix AD:\n";
+//cout << "  Stiffness matrix for system with Dirichlet conditions.\n";
+//cout << "\n";
+//cout << ad;
+//cout << "\n";
+//cout << "  Matrix AN:\n";
+//cout << "  Stiffness matrix for system with Neumann conditions.\n";
+//cout << "\n";
+//cout << an;
+
+{ofstream fout("Stiffness_matrix.txt");
+fout << K << endl;
+}
+
 //Plot
 plot([uu, vv], wait=1);
 //plot([uu, vv], wait=1, bb=[[-0.5, 2.5], [2.5, -0.5]]);
@@ -69,9 +110,8 @@ savemesh(th,"export_mesh.msh");
 ffSaveVh(th,Ph,"export_vh.txt");
 ffSaveData(E, "efile.txt")
 ffSaveData(uu, "uufile.txt")
-ffSaveData(vv, "vvfile.txt")
-//ffSaveData(u, "ufile.txt")
-//ffSaveData(v, "vfile.txt")
+ffSaveData(f1, "f1file.txt")
+ffSaveData(f2, "f2file.txt")
 
 
 cout << "// Get data of the mesh" << endl;
